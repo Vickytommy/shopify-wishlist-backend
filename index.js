@@ -8,9 +8,10 @@ const SHOP = process.env.SHOP;
 const ADMIN_API_TOKEN = process.env.ADMIN_API_TOKEN;
 
 app.get("/apps/wishlist/update", async (req, res) => {
-  const customerId = '8802065350953';
-  const customerGID =  'gid://shopify/Customer/8802065350953';
-  let wishlist = ['gid://shopify/Product/9458209456425', 'gid://shopify/Product/9458209423657', 'gid://shopify/Product/9458209554729']
+  const { customerId, wishlist } = req.body;
+  // const customerId = '8802065350953';
+  // const customerGID =  'gid://shopify/Customer/8802065350953';
+  // let wishlist = ['gid://shopify/Product/9458209456425', 'gid://shopify/Product/9458209423657', 'gid://shopify/Product/9458209554729']
 
   try {
     const existingMetafield = await getWishlistMetafield(customerId);
