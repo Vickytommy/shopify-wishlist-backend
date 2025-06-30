@@ -1,7 +1,16 @@
 require("dotenv").config();
 const express = require("express");
 const fetch = require("node-fetch");
+const cors = require("cors");
 const app = express();
+
+app.use(cors({
+  origin: "https://www.zentaii.com",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+
 app.use(express.json());
 
 const SHOP = process.env.SHOP;
