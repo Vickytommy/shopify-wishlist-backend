@@ -24,7 +24,37 @@ app.use(express.json());
 const SHOP = process.env.SHOP;
 const ADMIN_API_TOKEN = process.env.ADMIN_API_TOKEN;
 
-app.get("/apps/wishlist/update", async (req, res) => {
+app.get("/", (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Wishlist Backend</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+            background-color: #f9f9f9;
+          }
+          h1 {
+            color: #333;
+          }
+          p {
+            color: #666;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>✅ Wishlist Backend is Running</h1>
+        <p>If you're seeing this, your server is working correctly.</p>
+      </body>
+    </html>
+  `);
+});
+
+
+app.post("/apps/wishlist/update", async (req, res) => {
   const { customerId, wishlist } = req.body;
   // const customerId = '8802065350953';
   // const customerGID =  'gid://shopify/Customer/8802065350953';
