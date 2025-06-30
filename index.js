@@ -7,62 +7,71 @@ app.use(express.json());
 const SHOP = process.env.SHOP;
 const ADMIN_API_TOKEN = process.env.ADMIN_API_TOKEN;
 
-app.post("/apps/wishlist/update", async (req, res) => {
-  const { customerGID, wishlist } = req.body;
-
-  if (!customerGID || !wishlist) {
-    return res.status(400).json({ success: false, error: "Missing data" });
-  }
-
-  const query = `
-    mutation UpdateCustomerWishlist($input: [MetafieldsSetInput!]!) {
-      metafieldsSet(metafields: $input) {
-        metafields {
-          id
-          value
-        }
-        userErrors {
-          field
-          message
-        }
-      }
-    }
-  `;
-
-  const variables = {
-    input: [
-      {
-        ownerId: customerGID,
-        namespace: "custom",
-        key: "wishlist",
-        type: "list.product_reference",
-        value: JSON.stringify(wishlist),
-      }
-    ]
-  };
+app.get("/apps/wishlist/update", async (req, res) => {
+  const customerId = '8802065350953';
+  const customerGID =  'gid://shopify/Customer/8802065350953';
+  let wishlist = ['gid://shopify/Product/9458209456425', 'gid://shopify/Product/9458209423657', 'gid://shopify/Product/9458209554729']
 
   try {
-    const response = await fetch(`https://${SHOP}/admin/api/2024-04/graphql.json`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Shopify-Access-Token": ADMIN_API_TOKEN
-      },
-      body: JSON.stringify({ query, variables })
-    });
+    const existingMetafield = await getWishlistMetafield(customerId);
+    const metafieldId = existingMetafield?.id;
 
-    const result = await response.json();
-    const errors = result?.data?.metafieldsSet?.userErrors;
-
-    if (errors?.length) {
-      return res.status(400).json({ success: false, error: errors });
-    }
-
-    res.json({ success: true });
+    await saveWishlist(customerId, wishlist, metafieldId);
+    res.json({ success: true, message: metafieldId ? "Wishlist updated" : "Wishlist created" });
   } catch (err) {
+    console.error("❌ Error updating wishlist:", err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+async function getWishlistMetafield(customerId) {
+  const url = `https://${SHOP}/admin/api/2025-04/customers/${customerId}/metafields.json`;
+
+  const res = await fetch(url, {
+    headers: {
+      "Content-Type": "application/json",
+      "X-Shopify-Access-Token": ADMIN_API_TOKEN
+    }
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) throw new Error(data.errors || "Failed to fetch metafields");
+
+  return data.metafields.find(mf => mf.namespace === "custom" && mf.key === "wishlist");
+}
+
+async function saveWishlist(customerId, wishlist, metafieldId) {
+  const metafieldPayload = {
+    metafield: {
+      id: metafieldId,
+      type: "list.product_reference",
+      value: JSON.stringify(wishlist),
+    }
+  };
+
+  const url = `https://${SHOP}/admin/api/2025-04/customers/${customerId}/metafields/${metafieldId}.json`
+
+  console.log('Savings ', JSON.stringify(metafieldPayload))
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Shopify-Access-Token": ADMIN_API_TOKEN
+    },
+    body: JSON.stringify(metafieldPayload)
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.errors || JSON.stringify(result));
+  }
+
+  console.log("Wishlist saved successfully:", result);
+
+  return result;
+}
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
