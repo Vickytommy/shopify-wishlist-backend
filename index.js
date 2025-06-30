@@ -4,10 +4,18 @@ const fetch = require("node-fetch");
 const cors = require("cors");
 const app = express();
 
+const allowedOrigins = ['https://zentaii.com', 'https://www.zentaii.com'];
+
 app.use(cors({
-  origin: "https://www.zentaii.com",
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  credentials: true
 }));
 
 
